@@ -19,29 +19,18 @@ import java.util.Date
 class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding // binding variable
     private val BASE_URL = "https://api.weatherapi.com/v1/"
+    val days = mutableListOf<Day>()
+    lateinit var adaptor: WeatherAdaptor
     override fun onCreate(savedInstanceState: Bundle?) {
         binding = ActivityMainBinding.inflate(layoutInflater) // binding variable
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater) // binding variable
         val view = binding.root
         setContentView(view)
-//        val days = mutableListOf<Day>(
-//            Day("Sunny", R.drawable.img, "2023-07-10 04:00"),
-//            Day("Rainy", R.drawable.img, "2023-07-11 00:00"),
-//            Day("Cloudy", R.drawable.img, "2023-07-12 07:00"),
-//            Day("Sunny", R.drawable.img, "2023-07-13 09:00"),
-//            Day("Rainy", R.drawable.img, "2023-07-14 08:00"),
-//            Day("Cloudy", R.drawable.img, "2023-07-15 06:00"),
-//            Day("Sunny", R.drawable.img, "2023-07-16 02:00"),
-//            Day("Sunny", R.drawable.img, "2023-07-16 02:00"),
-//            Day("Sunny", R.drawable.img, "2023-07-16 02:00"),
-//            Day("Sunny", R.drawable.img, "2023-07-16 02:00"),
-//            Day("Sunny", R.drawable.img, "2023-07-16 02:00")
-//        )
-//        val adapter = WeatherAdaptor(days)
-//        binding.rvWeather.adapter = adapter
-//        binding.rvWeather.layoutManager = LinearLayoutManager(this)
         fetchData()
+        adaptor = WeatherAdaptor(days)
+        binding.rvWeather.adapter = adaptor
+        binding.rvWeather.layoutManager = LinearLayoutManager(this)
     }
     private fun fetchData(){
         val retrofitBuilder = Retrofit.Builder()
@@ -52,8 +41,18 @@ class MainActivity : AppCompatActivity() {
         val retrofitData = retrofitBuilder.getData()
         retrofitData.enqueue(object : Callback<Forecast?> {
             override fun onResponse(call: Call<Forecast?>, response: Response<Forecast?>) {
-//                val responseBody = response.body()
-                Log.i("Response", "Done")
+                val responseBody = response.body()
+                Log.i("Response", responseBody.toString())
+                val forecast = responseBody?.forecast
+                val forecastDays = forecast?.forecastday
+                for (day in forecastDays!!) {
+                    val date = day.date
+                    val condition = day.day.condition.text
+                    val image = R.drawable.img
+                    val day = Day(condition, image, date)
+                    days.add(day)
+                }
+                adaptor.notifyDataSetChanged()
             }
 
             override fun onFailure(call: Call<Forecast?>, t: Throwable) {
